@@ -4,6 +4,7 @@ import { fromEvent } from "rxjs";
 import { filter } from "rxjs/operators";
 import Interpreter from "./interpreter";
 import Visitor from "./visitors";
+import Input from './input';
 const acorn = require("acorn");
 const App = () => {
   let [inputValue, setInputValue] = React.useState()
@@ -45,7 +46,6 @@ const App = () => {
           pos.current = pos.current - 1;
         }
       });
-
       arrowDown.subscribe(() => {
         if (recentValues.length > 0 && pos.current < recentValues.length) {
           setInputValue(
@@ -68,10 +68,12 @@ const App = () => {
         }
         try {
           const body = acorn.parse(eValue || value, { ecmaVersion: 2020 }).body;
+          console.log(body);
           const jsInterpreter = new Interpreter(new Visitor());
           jsInterpreter.interpret(body);
           const answer = jsInterpreter.getValue();
-          const finalResult = answer ? value + "    =  " + answer : value;
+          const finalResult = answer? value + " = " + answer : value;
+          // console.log(finalResult);
           setPrevData((prevHistory) => [...prevHistory, finalResult]);
           setInputValueHis((prevValue) => [...prevValue, value]);
           recentValues.push(...inputValueHis, value);
@@ -82,26 +84,9 @@ const App = () => {
     }
   };
 
-  const showPrevData = (item, index) => (
-    <div key={index} style={{ height: "45px", textAlign: "left" }}>
-      <span style={{ color: "red" }}>{"> "}</span>
-      {item}
-    </div>
-  );
-
   return (
     <div className="App">
-      <div>{prevData.length > 0 && prevData.map(showPrevData)}</div>
-      <div className="textarea">
-        <textarea
-          ref={inputRef}
-          value={inputValue}
-          onChange={updateInputValue}
-          onKeyDown={interpretJsCode}
-          style={{ width: "100%", height: "100px" }}
-          autoFocus
-        />
-      </div>
+      <Input prevData={prevData} inputRef={inputRef} inputValue={inputValue} updateInputValue={updateInputValue} interpretJsCode={interpretJsCode} />
     </div>
   );
 };

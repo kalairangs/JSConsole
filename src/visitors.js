@@ -14,6 +14,15 @@ class Visitor extends React.Component {
     super(value);
     this.value = value;
   }
+  initFunc(node) {
+    const init = this.visitNode(node.init);
+    globalScope.set('url', init);
+    var wrapper = function (text) {
+      return alert(text);
+    };
+    globalScope.set('alert', wrapper);
+
+  }
   visitVariableDeclaration(node) {
     const nodeKind = node.kind;
     return this.visitNodes(node.declarations, nodeKind);
@@ -70,6 +79,15 @@ class Visitor extends React.Component {
   visitCallExpression(node) {
     const _arguments = this.evalArgs(node.arguments);
     this.value = _arguments;
+    if (node.callee.type == "MemberExpression") {
+      const callee = node.callee;
+      if (node.callee.property.name == "log") {
+        return this.value;
+      }
+    }
+    if (node.callee.type == "Identifier" && node.callee.name == "alert") {
+      return alert(this.value);
+    }
   }
   visitExpressionStatement(node) {
     return this.visitCallExpression(node.expression);
@@ -79,7 +97,9 @@ class Visitor extends React.Component {
       this.visitNode(node, nodeKind);
     }
   }
+
   visitNode(node, nodeKind = "") {
+    console.log(node.type);
     switch (node.type) {
       case "VariableDeclaration":
         return this.visitVariableDeclaration(node);
